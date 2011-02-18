@@ -1,0 +1,135 @@
+#!/usr/bin/env python
+
+## Data is persisted in a sqlite database in the current directory
+DB = 'storage.sqlite3'
+
+## Wrapper class for friends
+class Friend:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+    @property
+    def status(self):
+        import datetime
+        if self.online:
+            return 'Online'
+        if not self.last_online:
+            return 'Offline'
+
+        diff = datetime.datetime.now() - datetime.datetime.fromtimestamp(self.last_online)
+        periods = (
+            (diff.days, "day", "days"),
+            (diff.seconds / 3600, "hour", "hours"),
+            (diff.seconds / 60, "minute", "minutess"),
+            (diff.seconds, "second", "seconds"),
+        )
+        for period, singular, plural in periods:
+            if period:
+                return "Online for %d %s" % (period, singular if period == 1 else plural)
+        return 'Online'
+
+
+def update(email, passwd):
+    import time
+    import network
+    import sqlite3
+
+    connection = sqlite3.connect(DB)
+    cursor = connection.cursor()
+
+    ## Double check that DB is set up
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS friends (
+            handle TEXT PRIMARY KEY,
+            online INTEGER,
+            playing TEXT,
+            avatar TEXT,
+            last_online NUMERIC
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS vars (
+            key TEXT PRIMARY KEY,
+            val TEXT
+        )
+    """)
+
+
+    print 'Updating...'
+    print 'Logging in...'
+
+    p = network.PSN(email=email, passwd=passwd)
+    cursor.execute("INSERT OR REPLACE INTO vars (key, val) VALUES ('handle', ?)", (p.handle,))
+
+    update_args = []
+    online_args = []
+    for friend in p.friends:
+        print 'Updating status for %s...' % friend.handle
+
+        cursor.execute("INSERT OR REPLACE INTO friends (handle, online, playing, avatar) VALUES (?, ?, ?, ?)",
+            (friend.handle, friend.online, friend.playing, friend.avatar))
+
+        if friend.online:
+            cursor.execute("UPDATE friends SET last_online=? WHERE handle=?", (time.time(), friend.handle))
+
+    cursor.execute("INSERT OR REPLACE INTO vars (key, val) VALUES ('last_update', ?)", (unicode(time.time()),))
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+    print 'Done'
+
+def render(outfile):
+    import codecs
+    import datetime
+    from jinja2 import Environment, FileSystemLoader
+    import os
+    import sqlite3
+
+    connection = sqlite3.connect(DB)
+    cursor = connection.cursor()
+
+    try:
+        handle = cursor.execute("SELECT val FROM vars WHERE key='handle'").fetchone()[0]
+    except:
+        raise RuntimeError('Statuses have not been updated, please run update')
+
+    friends = cursor.execute("SELECT * FROM friends")
+    labels = [i[0] for i in friends.description]
+    friends = [Friend(**dict(zip(labels, i))) for i in friends.fetchall()]
+
+    updated = cursor.execute("SELECT val FROM vars WHERE key='last_update'").fetchone()[0]
+    updated = datetime.datetime.fromtimestamp(float(updated)).strftime('%A, %B %d, %Y at %I:%M %p')
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__) ,'templates')))
+    template = env.get_template('index.html')
+    rendered = template.render(handle=handle, friends=friends, updated=updated)
+
+    with codecs.open(outfile, 'w', 'UTF-8') as out:
+        out.write(rendered)
+
+    print 'Rendered to %s' % outfile
+
+
+def main():
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option('-r', '--render', action='store', dest='file', help='Render template to FILE')
+    parser.add_option('-u', '--update', action='store_true', dest='update', help='Update friendlist from PSN')
+    parser.add_option('-c', '--credentials', action='store', dest='credentials', help='PSN login credentials in the form email@example.com:password123')
+
+    (options, args) = parser.parse_args()
+    if options.update:
+        if not options.credentials:
+            raise RuntimeError('Credentials are required for update')
+        email, passwd = options.credentials.split(':', 1)
+        update(email, passwd)
+    if options.file:
+        render(options.file)
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,21 @@
+Simple class that allows you to sign-in to PSN and grab your friends statuses.
+
+Requirements:
+BeautifulSoup
+Jinja2
+sqlite3
+
+Jinja2 is only required to output an html table of your friends.
+
+network.py contains all the gooey bits.
+run.py allows you to download statuses and save to a sqlite database then generate an html page showing statuses.
+
+Run like so:
+
+$ python -mpsn.run --update --credentials psnuser@example.com:psnpassword
+$ python -mpsn.run --render output.html
+
+or all together:
+
+$ python -mpsn.run --update --credentials psnuser@example.com:psnpassword --render output.html
+

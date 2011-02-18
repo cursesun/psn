@@ -1,0 +1,51 @@
+body {
+    font-family: 'lucida grande', Tahoma, Verdana, Arial, sans-serif;
+}
+h1 {
+    font-size: 18px;
+}
+
+h1 label,
+p {
+    font-size: 12px;
+    color: #666;
+    font-weight: normal;
+}
+
+th {
+    background: #333;
+    color: #fff;
+    padding: 10px;
+    cursor: pointer;
+}
+
+th.headerSortUp:after {
+    content: " ▲";
+}
+
+th.headerSortDown:after {
+    content: " ▼";
+}
+
+td {
+    padding: 5px;
+}
+
+tr.odd {
+    background: #f6f6f6;
+}
+
+tr img {
+    height: 19px;
+    width: 19px;
+}
+
+tr:hover {
+    background: #f0f0f0;
+}
+
+tr.offline {
+    color: #666;
+}
+
+

@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Player Status</title>
+        <style type="text/css">
+        {% include "styles.css" %}
+        </style>
+    </head>
+    <body>
+    <h1>Player Status for friends of <code>{{ handle }}</code> <input type="checkbox" id="hide" /><label for="hide">Show Offline</label></h1>
+    <table cellpadding="0" cellspacing="0" id="friends">
+        <thead>
+            <tr>
+                <th class="avatar"></th>
+                <th class="handle">PSN</th>
+                <th class="status">Status</th>
+                <th class="playing">Playing</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for friend in friends %}
+            <tr class="{{ loop.cycle('odd', 'even') }} {% if friend.online %} online {% else %} offline {% endif %}">
+                <td class="avatar"><img src="{{ friend.avatar }}" /></td>
+                <td class="handle">{{ friend.handle }}</td>
+                <td class="status">
+                   {{ friend.status }}
+                </td>
+                <td class="playing">
+                    {% if friend.playing %}
+                        {{ friend.playing }}
+                    {% else %}
+                        &mdash;
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <p>Friend PSN <code>{{ handle }}</code> to be added.</p>
+    <p>Updated: {{ updated }}</p>
+    <script type="text/javascript">
+        {% include "scripts.js" %}
+    </script>
+</body>
+</html>
