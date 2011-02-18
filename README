@@ -2,6 +2,8 @@ Simple class that allows you to sign-in to PSN and grab your friends statuses.
 
 Requirements:
 BeautifulSoup
+
+And to run the script to output html:
 Jinja2
 sqlite3
 
