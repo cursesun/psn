@@ -11,10 +11,10 @@ class Friend:
     @property
     def status(self):
         import datetime
-        if self.online:
-            return 'Online'
         if not self.last_online:
             return 'Offline'
+
+        state = 'Online' if self.online else 'Offline'
 
         diff = datetime.datetime.now() - datetime.datetime.fromtimestamp(self.last_online)
         periods = (
@@ -25,8 +25,8 @@ class Friend:
         )
         for period, singular, plural in periods:
             if period:
-                return "Online for %d %s" % (period, singular if period == 1 else plural)
-        return 'Online'
+                return "%s for %d %s" % (state, period, singular if period == 1 else plural)
+        return state
 
 
 def update(email, passwd):
@@ -61,16 +61,24 @@ def update(email, passwd):
     p = network.PSN(email=email, passwd=passwd)
     cursor.execute("INSERT OR REPLACE INTO vars (key, val) VALUES ('handle', ?)", (p.handle,))
 
-    update_args = []
-    online_args = []
     for friend in p.friends:
         print 'Updating status for %s...' % friend.handle
 
-        cursor.execute("INSERT OR REPLACE INTO friends (handle, online, playing, avatar) VALUES (?, ?, ?, ?)",
-            (friend.handle, friend.online, friend.playing, friend.avatar))
+        try:
+            prev_timestamp, prev_online = cursor.execute("SELECT last_online, online FROM friends WHERE handle=?", (friend.handle,)).fetchone()
+        except:
+            prev_timestamp = None
+            prev_online = False
 
-        if friend.online:
-            cursor.execute("UPDATE friends SET last_online=? WHERE handle=?", (time.time(), friend.handle))
+        # last_online time is only updated with a change in online status.
+        # This allows us to compute time since online vs. time offline
+        if friend.online != prev_online or prev_timestamp is None:
+            cursor.execute("INSERT OR REPLACE INTO friends (handle, online, playing, avatar, last_online) VALUES (?, ?, ?, ?, ?)",
+                (friend.handle, friend.online, friend.playing, friend.avatar, time.time()))
+        else:
+            cursor.execute("INSERT OR REPLACE INTO friends (handle, online, playing, avatar, last_online) VALUES (?, ?, ?, ?, ?)",
+                (friend.handle, friend.online, friend.playing, friend.avatar, prev_timestamp))
+
 
     cursor.execute("INSERT OR REPLACE INTO vars (key, val) VALUES ('last_update', ?)", (unicode(time.time()),))
 
