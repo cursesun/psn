@@ -56,3 +56,4 @@ $('#friends').bind("sortEnd",zebra);
 $('#hide').click(hide);
 hide();
 $('th.playing').trigger('click');
+setInterval(function(){document.location.href=document.location.href}, 180000);
