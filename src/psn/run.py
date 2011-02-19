@@ -20,7 +20,7 @@ class Friend:
         periods = (
             (diff.days, "day", "days"),
             (diff.seconds / 3600, "hour", "hours"),
-            (diff.seconds / 60, "minute", "minutess"),
+            (diff.seconds / 60, "minute", "minutes"),
             (diff.seconds, "second", "seconds"),
         )
         for period, singular, plural in periods:
