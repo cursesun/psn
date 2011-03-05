@@ -73,7 +73,7 @@ class Friend(object):
         soup = BeautifulSoup(rs)
 
         try:
-            self._avatar = soup.find('div', {'class': 'avatar'}).find('img')['src']
+            self._avatar = soup.find('div', {'class': 'avatar'}).find('img')['src'].split('=', 1)[1]
         except:
             self._avatar = u''
 
