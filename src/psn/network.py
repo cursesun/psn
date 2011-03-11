@@ -112,9 +112,9 @@ class PSN(object):
 
 
         ## Post the login form to get a session id
-        url = 'https://store.playstation.com/external/login.action'
-        data = {'loginName': self._email,
-                'password': self._passwd,
+        url = 'https://store.playstation.com/j_acegi_external_security_check?target=/external/login.action'
+        data = {'j_username': self._email,
+                'j_password': self._passwd,
                 'returnURL': 'http://www.psnapi.com.ar/ps3/login.aspx'}
         headers = DEFAULT_HEADERS
         headers.update({'Referer': 'https://store.playstation.com/external/index.vm?returnURL=http://www.psnapi.com.ar/ps3/login.aspx'})
