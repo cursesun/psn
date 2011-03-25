@@ -85,8 +85,6 @@ class PSN(object):
         # Install global opener for urllib2 using a cookie fiel named after
         self._cookie_file = email.lower().strip() + '.lwp'
         self._cookie_jar = cookielib.LWPCookieJar()
-        if os.path.isfile(self._cookie_file):
-            self._cookie_jar.load(self._cookie_file)
 
         if proxy:
             proxy_host, proxy_port = proxy.split(':')
@@ -136,7 +134,6 @@ class PSN(object):
 
         # Store handle
         self._handle = rs.split(',')[0].replace('handle=','')
-        self._cookie_jar.save(self._cookie_file)
 
     @property
     def friends(self):
@@ -148,9 +145,15 @@ class PSN(object):
 
         self._friends = []
 
-        url = 'http://us.playstation.com/playstation/psn/profile/get_friends_names'
+        url = 'https://us.playstation.com/playstation/psn/get_friends?id=%f' % random()
         headers = DEFAULT_HEADERS
-        headers.update({'Referer': 'http://us.playstation.com/myfriends/'})
+        headers.update({'Referer': 'https://us.playstation.com/myfriends/', 'X-Requested-With': 'XMLHttpRequest'})
+        rq = urllib2.Request(url=url, data=urllib.urlencode({}), headers=headers)
+        rs = self._opener.open(rq, timeout=10000).read()
+
+        url = 'https://us.playstation.com/playstation/psn/profile/get_friends_names'
+        headers = DEFAULT_HEADERS
+        headers.update({'Referer': 'https://us.playstation.com/myfriends/'})
         rq = urllib2.Request(url=url, headers=headers)
         rs = self._opener.open(rq, timeout=10000).read()
         friend_handles = sorted(json.loads(rs), key=unicode.lower)
