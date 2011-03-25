@@ -109,8 +109,8 @@ class PSN(object):
     def _login(self):
 
         ## Check for valid stored cookes. If valid, set handle and return
-        if [i.name for i in self.cookie_jar] == REQUIRED_COOKIES:
-            self._handle = urlparse.parse_qs([i.value for i in self.cookie_jar if i.name=='SCEAuserinfo'][0])['psHandle'][0]
+        if [i.name for i in self._cookie_jar] == REQUIRED_COOKIES:
+            self._handle = urlparse.parse_qs([i.value for i in self._cookie_jar if i.name=='SCEAuserinfo'][0])['psHandle'][0]
             return
 
 
