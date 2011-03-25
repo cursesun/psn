@@ -9,11 +9,6 @@ import urllib
 import urllib2
 import urlparse
 
-
-## File to store cookies
-COOKIE_JAR = 'cookies.lwp'
-
-
 ## Default set of headers for requests to PSN
 DEFAULT_HEADERS = {
     'User-agent':       'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1)',
@@ -25,13 +20,6 @@ DEFAULT_HEADERS = {
 
 ## These cookies must be set to skip logon
 REQUIRED_COOKIES = ['PSNS2STICKET', 'Register', 'SCEAuserinfo', 'TICKET', 'betaCookie', 'op.an', 'ps-qa.si', 'psnInfoCk', 'userinfo']
-
-
-cookie_jar = cookielib.LWPCookieJar()
-if os.path.isfile(COOKIE_JAR):
-    cookie_jar.load(COOKIE_JAR)
-opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie_jar))
-urllib2.install_opener(opener)
 
 
 class Friend(object):
@@ -97,6 +85,14 @@ class PSN(object):
         self._passwd = passwd
         self._friends = None
 
+        # Install global opener for urllib2 using a cookie fiel named after
+        self.cookie_file = email.lower().strip() + '.lwp'
+        self.cookie_jar = cookielib.LWPCookieJar()
+        if os.path.isfile(self.cookie_file):
+            self.cookie_jar.load(self.cookie_file)
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
+        urllib2.install_opener(opener)
+
     @property
     def handle(self):
         if not self._handle:
@@ -106,8 +102,8 @@ class PSN(object):
     def _login(self):
 
         ## Check for valid stored cookes. If valid, set handle and return
-        if [i.name for i in cookie_jar] == REQUIRED_COOKIES:
-            self._handle = urlparse.parse_qs([i.value for i in cookie_jar if i.name=='SCEAuserinfo'][0])['psHandle'][0]
+        if [i.name for i in self.cookie_jar] == REQUIRED_COOKIES:
+            self._handle = urlparse.parse_qs([i.value for i in self.cookie_jar if i.name=='SCEAuserinfo'][0])['psHandle'][0]
             return
 
 
@@ -143,7 +139,7 @@ class PSN(object):
 
         # Store handle
         self._handle = rs.split(',')[0].replace('handle=','')
-        cookie_jar.save(COOKIE_JAR)
+        self.cookie_jar.save(self.cookie_file)
 
     @property
     def friends(self):

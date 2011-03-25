@@ -15,9 +15,12 @@ run.py allows you to download statuses and save to a sqlite database then genera
 Run like so:
 
 $ python -mpsn.run --update --credentials psnuser@example.com:psnpassword
+or with multiple accounts
+$ python -mpsn.run --update --credentials psnuser1@example.com:passwd1,psnuser2@example.com:passwd2
+
 $ python -mpsn.run --render output.html
 
 or all together:
 
-$ python -mpsn.run --update --credentials psnuser@example.com:psnpassword --render output.html
+$ python -mpsn.run --update --credentials psnuser1@example.com:passwd1,psnuser2@example.com:passwd2 --render output.html
 

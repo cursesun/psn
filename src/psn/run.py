@@ -56,9 +56,17 @@ def update(email, passwd):
 
 
     print 'Updating...'
-    print 'Logging in...'
+    print 'Logging in %s...' % email
 
     p = network.PSN(email=email, passwd=passwd)
+    try:
+        handles = cursor.execute("SELECT val FROM vars WHERE  key='handles'").fetchone()[0]
+    except TypeError:
+        handles = ''
+    handles = handles.split(',')
+    handles.append(p.handle)
+    handles = ','.join(list(set(handles)))
+    cursor.execute("INSERT OR REPLACE INTO vars (key, val) VALUES ('handles', ?)", (handles,))
     cursor.execute("INSERT OR REPLACE INTO vars (key, val) VALUES ('handle', ?)", (p.handle,))
 
     for friend in p.friends:
@@ -98,6 +106,7 @@ def render(outfile):
     cursor = connection.cursor()
 
     try:
+        handles = cursor.execute("SELECT val FROM vars WHERE key='handles'").fetchone()[0]
         handle = cursor.execute("SELECT val FROM vars WHERE key='handle'").fetchone()[0]
     except:
         raise RuntimeError('Statuses have not been updated, please run update')
@@ -115,7 +124,7 @@ def render(outfile):
 
     env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__) ,'templates')))
     template = env.get_template('index.html')
-    rendered = template.render(handle=handle, friends=friends, updated=updated)
+    rendered = template.render(handle=handle, handles=handles, friends=friends, updated=updated)
 
     with codecs.open(outfile, 'w', 'UTF-8') as out:
         out.write(rendered)
@@ -128,14 +137,16 @@ def main():
     parser = OptionParser()
     parser.add_option('-r', '--render', action='store', dest='file', help='Render template to FILE')
     parser.add_option('-u', '--update', action='store_true', dest='update', help='Update friendlist from PSN')
-    parser.add_option('-c', '--credentials', action='store', dest='credentials', help='PSN login credentials in the form email@example.com:password123')
+    parser.add_option('-c', '--credentials', action='store', dest='credentials', help='PSN login credentials in the form email@example.com:password123,email1@example.com:password2,...')
 
     (options, args) = parser.parse_args()
     if options.update:
         if not options.credentials:
             raise RuntimeError('Credentials are required for update')
-        email, passwd = options.credentials.split(':', 1)
-        update(email, passwd)
+        accounts = options.credentials.split(',')
+        for account in accounts:
+            email, passwd = account.strip().split(':', 1)
+            update(email, passwd)
     if options.file:
         render(options.file)
 
