@@ -79,7 +79,7 @@ class Friend(object):
 
 class PSN(object):
 
-    def __init__(self, email, passwd):
+    def __init__(self, email, passwd, proxy=None):
         self._handle = None
         self._email = email
         self._passwd = passwd
@@ -90,7 +90,14 @@ class PSN(object):
         self.cookie_jar = cookielib.LWPCookieJar()
         if os.path.isfile(self.cookie_file):
             self.cookie_jar.load(self.cookie_file)
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
+
+        if proxy:
+            proxy_host, proxy_port = proxy.split(':')
+            opener = urllib2.build_opener(
+                urllib2.HTTPCookieProcessor(self.cookie_jar),
+                urllib2.ProxyHandler({'http':'http://%s:%s' % (proxy_host,proxy_port)}))
+        else:
+            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
         urllib2.install_opener(opener)
 
     @property

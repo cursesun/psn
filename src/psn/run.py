@@ -29,7 +29,7 @@ class Friend:
         return state
 
 
-def update(email, passwd):
+def update(email, passwd, proxy=None):
     import time
     import network
     import sqlite3
@@ -58,12 +58,12 @@ def update(email, passwd):
     print 'Updating...'
     print 'Logging in %s...' % email
 
-    p = network.PSN(email=email, passwd=passwd)
+    p = network.PSN(email=email, passwd=passwd, proxy=proxy)
     try:
         handles = cursor.execute("SELECT val FROM vars WHERE  key='handles'").fetchone()[0]
+        handles = handles.split(',')
     except TypeError:
-        handles = ''
-    handles = handles.split(',')
+        handles = []
     handles.append(p.handle)
     handles = ','.join(list(set(handles)))
     cursor.execute("INSERT OR REPLACE INTO vars (key, val) VALUES ('handles', ?)", (handles,))
@@ -138,6 +138,7 @@ def main():
     parser.add_option('-r', '--render', action='store', dest='file', help='Render template to FILE')
     parser.add_option('-u', '--update', action='store_true', dest='update', help='Update friendlist from PSN')
     parser.add_option('-c', '--credentials', action='store', dest='credentials', help='PSN login credentials in the form email@example.com:password123,email1@example.com:password2,...')
+    parser.add_option('-p', '--proxy', action='store', dest='proxy', help='HTTP proxy in the form of host:port. Eg. localhost:9050 for Tor running on localhost port 9050')
 
     (options, args) = parser.parse_args()
     if options.update:
@@ -146,7 +147,7 @@ def main():
         accounts = options.credentials.split(',')
         for account in accounts:
             email, passwd = account.strip().split(':', 1)
-            update(email, passwd)
+            update(email, passwd, options.proxy)
     if options.file:
         render(options.file)
 
