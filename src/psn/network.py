@@ -18,10 +18,6 @@ DEFAULT_HEADERS = {
     'Connection':       'Keep-Alive',
 }
 
-## These cookies must be set to skip logon
-REQUIRED_COOKIES = ['PSNS2STICKET', 'Register', 'SCEAuserinfo', 'TICKET', 'betaCookie', 'op.an', 'ps-qa.si', 'psnInfoCk', 'userinfo']
-
-
 class Friend(object):
 
     def __init__(self, handle, opener):
@@ -107,12 +103,6 @@ class PSN(object):
         return self._handle
 
     def _login(self):
-
-        ## Check for valid stored cookes. If valid, set handle and return
-        if [i.name for i in self._cookie_jar] == REQUIRED_COOKIES:
-            self._handle = urlparse.parse_qs([i.value for i in self._cookie_jar if i.name=='SCEAuserinfo'][0])['psHandle'][0]
-            return
-
 
         ## Post the login form to get a session id
         url = 'https://store.playstation.com/j_acegi_external_security_check?target=/external/login.action'
