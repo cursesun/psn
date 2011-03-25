@@ -24,11 +24,12 @@ REQUIRED_COOKIES = ['PSNS2STICKET', 'Register', 'SCEAuserinfo', 'TICKET', 'betaC
 
 class Friend(object):
 
-    def __init__(self, handle):
+    def __init__(self, handle, opener):
         self.handle = handle
         self._online = None
         self._avatar = None
         self._playing = None
+        self._opener = opener
 
     @property
     def online(self):
@@ -57,7 +58,7 @@ class Friend(object):
             'X-Requested-With': 'XMLHttpRequest',
         })
         rq = urllib2.Request(url=url, headers=headers)
-        rs = unicode(urllib2.urlopen(rq, timeout=10000).read(), errors='ignore')
+        rs = unicode(self._opener.open(rq, timeout=10000).read(), errors='ignore')
         soup = BeautifulSoup(rs)
 
         try:
@@ -86,19 +87,18 @@ class PSN(object):
         self._friends = None
 
         # Install global opener for urllib2 using a cookie fiel named after
-        self.cookie_file = email.lower().strip() + '.lwp'
-        self.cookie_jar = cookielib.LWPCookieJar()
-        if os.path.isfile(self.cookie_file):
-            self.cookie_jar.load(self.cookie_file)
+        self._cookie_file = email.lower().strip() + '.lwp'
+        self._cookie_jar = cookielib.LWPCookieJar()
+        if os.path.isfile(self._cookie_file):
+            self._cookie_jar.load(self._cookie_file)
 
         if proxy:
             proxy_host, proxy_port = proxy.split(':')
-            opener = urllib2.build_opener(
+            self._opener = urllib2.build_opener(
                 urllib2.HTTPCookieProcessor(self.cookie_jar),
                 urllib2.ProxyHandler({'http':'http://%s:%s' % (proxy_host,proxy_port)}))
         else:
-            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
-        urllib2.install_opener(opener)
+            self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookie_jar))
 
     @property
     def handle(self):
@@ -124,29 +124,29 @@ class PSN(object):
         rq = urllib2.Request(url=url, data=urllib.urlencode(data), headers=headers)
 
         # Store session id
-        sess_id = urllib2.urlopen(rq, timeout=10000).read()
+        sess_id = self._opener.open(rq, timeout=10000).read()
 
         ## Hammer at a few urls for the proper cookies
         del headers['Referer']
         url = 'http://us.playstation.com/uwps/PSNTicketRetrievalGenericServlet?sessionId=%s' % (sess_id)
         rq = urllib2.Request(url=url, headers=headers)
         try:
-            urllib2.urlopen(rq, timeout=10000)
+            self._opener.open(rq, timeout=10000)
         except urllib2.HTTPError:
             pass # this just happens, but it needs to happen
 
         url = 'http://us.playstation.com/uwps/HandleIFrameRequests?sessionId=%s' % (sess_id)
         rq = urllib2.Request(url=url, headers=headers)
-        urllib2.urlopen(rq, timeout=10000)
+        self._opener.open(rq, timeout=10000)
 
         url = 'http://us.playstation.com/uwps/CookieHandler'
         headers.update({'Referer': 'http://us.playstation.com/portableid/index.htm'})
         rq = urllib2.Request(url=url, headers=headers)
-        rs = urllib2.urlopen(rq, timeout=10000).read()
+        rs = self._opener.open(rq, timeout=10000).read()
 
         # Store handle
         self._handle = rs.split(',')[0].replace('handle=','')
-        self.cookie_jar.save(self.cookie_file)
+        self._cookie_jar.save(self._cookie_file)
 
     @property
     def friends(self):
@@ -162,9 +162,9 @@ class PSN(object):
         headers = DEFAULT_HEADERS
         headers.update({'Referer': 'http://us.playstation.com/myfriends/'})
         rq = urllib2.Request(url=url, headers=headers)
-        rs = urllib2.urlopen(rq, timeout=10000).read()
+        rs = self._opener.open(rq, timeout=10000).read()
         friend_handles = sorted(json.loads(rs), key=unicode.lower)
 
         for handle in friend_handles:
-            self._friends.append(Friend(handle))
+            self._friends.append(Friend(handle, self._opener))
         return self._friends

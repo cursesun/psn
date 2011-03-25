@@ -24,3 +24,4 @@ or all together:
 
 $ python -mpsn.run --update --credentials psnuser1@example.com:passwd1,psnuser2@example.com:passwd2 --render output.html
 
+If you want to run the script through a proxy supply the argument --proxy <host>:<port>
