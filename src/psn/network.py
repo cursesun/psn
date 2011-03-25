@@ -3,8 +3,10 @@
 from BeautifulSoup import BeautifulSoup
 import cookielib
 import json
+import logging
 import os
 from random import random
+import sys
 import urllib
 import urllib2
 import urlparse
@@ -88,13 +90,23 @@ class PSN(object):
         if os.path.isfile(self._cookie_file):
             self._cookie_jar.load(self._cookie_file)
 
+
+        hh = urllib2.HTTPHandler()
+        hsh = urllib2.HTTPSHandler()
+        hh.set_http_debuglevel(1)
+        hsh.set_http_debuglevel(1)
+        opener = urllib2.build_opener(hh, hsh)
+        logger = logging.getLogger()
+        logger.addHandler(logging.StreamHandler(sys.stdout))
+        logger.setLevel(logging.NOTSET)
+
         if proxy:
             proxy_host, proxy_port = proxy.split(':')
-            self._opener = urllib2.build_opener(
+            self._opener = urllib2.build_opener(hh, hsh,
                 urllib2.HTTPCookieProcessor(self._cookie_jar),
                 urllib2.ProxyHandler({'http':'http://%s:%s' % (proxy_host,proxy_port)}))
         else:
-            self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookie_jar))
+            self._opener = urllib2.build_opener(hh, hsh, urllib2.HTTPCookieProcessor(self._cookie_jar))
 
     @property
     def handle(self):
@@ -148,9 +160,15 @@ class PSN(object):
 
         self._friends = []
 
-        url = 'http://us.playstation.com/playstation/psn/profile/get_friends_names'
+        url = 'https://us.playstation.com/playstation/psn/get_friends?id=%f' % random()
         headers = DEFAULT_HEADERS
-        headers.update({'Referer': 'http://us.playstation.com/myfriends/'})
+        headers.update({'Referer': 'https://us.playstation.com/myfriends/', 'X-Requested-With': 'XMLHttpRequest'})
+        rq = urllib2.Request(url=url, data=urllib.urlencode({}), headers=headers)
+        rs = self._opener.open(rq, timeout=10000).read()
+
+        url = 'https://us.playstation.com/playstation/psn/profile/get_friends_names'
+        headers = DEFAULT_HEADERS
+        headers.update({'Referer': 'https://us.playstation.com/myfriends/', 'X-Requested-With': 'XMLHttpRequest'})
         rq = urllib2.Request(url=url, headers=headers)
         rs = self._opener.open(rq, timeout=10000).read()
         friend_handles = sorted(json.loads(rs), key=unicode.lower)
