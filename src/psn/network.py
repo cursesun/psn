@@ -95,7 +95,7 @@ class PSN(object):
         if proxy:
             proxy_host, proxy_port = proxy.split(':')
             self._opener = urllib2.build_opener(
-                urllib2.HTTPCookieProcessor(self.cookie_jar),
+                urllib2.HTTPCookieProcessor(self._cookie_jar),
                 urllib2.ProxyHandler({'http':'http://%s:%s' % (proxy_host,proxy_port)}))
         else:
             self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookie_jar))
