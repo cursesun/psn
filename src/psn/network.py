@@ -158,7 +158,6 @@ class PSN(object):
         self._friends = []
 
         url = 'https://us.playstation.com/playstation/psn/get_friends?id=%f' % random()
-<<<<<<< HEAD
         headers = DEFAULT_HEADERS
         headers.update({'Referer': 'https://us.playstation.com/myfriends/', 'X-Requested-With': 'XMLHttpRequest'})
         rq = urllib2.Request(url=url, data=urllib.urlencode({}), headers=headers)
@@ -167,16 +166,6 @@ class PSN(object):
         url = 'https://us.playstation.com/playstation/psn/profile/get_friends_names'
         headers = DEFAULT_HEADERS
         headers.update({'Referer': 'https://us.playstation.com/myfriends/'})
-=======
-        headers = DEFAULT_HEADERS
-        headers.update({'Referer': 'https://us.playstation.com/myfriends/', 'X-Requested-With': 'XMLHttpRequest'})
-        rq = urllib2.Request(url=url, data=urllib.urlencode({}), headers=headers)
-        rs = self._opener.open(rq, timeout=10000).read()
-
-        url = 'https://us.playstation.com/playstation/psn/profile/get_friends_names'
-        headers = DEFAULT_HEADERS
-        headers.update({'Referer': 'https://us.playstation.com/myfriends/', 'X-Requested-With': 'XMLHttpRequest'})
->>>>>>> 4bb211e9b5a5c30a35cae19f84f5f17a336fa85e
         rq = urllib2.Request(url=url, headers=headers)
         rs = self._opener.open(rq, timeout=10000).read()
         friend_handles = sorted(json.loads(rs), key=unicode.lower)
